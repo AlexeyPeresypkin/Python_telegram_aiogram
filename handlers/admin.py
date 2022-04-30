@@ -2,9 +2,10 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from create_bot import dp, bot
-from data_base.sqlite_db import sql_add_command
+from data_base.sqlite_db import sql_add_command, sql_delete_command, sql_read2
 from keyboards.admin_kb import button_case_admin
 
 ID = None
@@ -80,6 +81,27 @@ async def load_price(message: types.Message, state: FSMContext):
         await state.finish()
 
 
+async def del_callback_run(callback_query: types.CallbackQuery):
+    await sql_delete_command(callback_query.data.replace('del ', ''))
+    await callback_query.answer(
+        text=f'{callback_query.data.replace("del ", "")} удалена.',
+        show_alert=True)
+
+
+async def delete_item(message: types.Message):
+    if message.from_user.id == ID:
+        read = await sql_read2()
+        for ret in read:
+            await bot.send_photo(message.from_user.id, ret[0],
+                                 f'{ret[1]}\nОписание: {ret[2]}\nЦена: {ret[-1]}')
+            await bot.send_message(message.from_user.id, text='^^^',
+                                   reply_markup=InlineKeyboardMarkup().
+                                   add(InlineKeyboardButton(
+                                       f'Удалить {ret[1]},',
+                                       callback_data=f'del {ret[1]}'
+                                   )))
+
+
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(cm_start, commands='Загрузить', state=None)
     dp.register_message_handler(cancel_handler, state='*', commands='отмена')
@@ -98,3 +120,5 @@ def register_handlers_admin(dp: Dispatcher):
                                 commands=['moderator'],
                                 is_chat_admin=True
                                 )
+    dp.register_callback_query_handler(del_callback_run, lambda x: x.data and x.data.startswith('del '))
+    dp.register_message_handler(delete_item, commands='Удалить')
