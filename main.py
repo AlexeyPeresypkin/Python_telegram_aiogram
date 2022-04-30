@@ -2,10 +2,12 @@ from aiogram import executor
 
 from create_bot import dp
 from handlers import admin, client, other
+from data_base import sqlite_db
 
 
 async def on_startup(_):
     print('Bot is online')
+    sqlite_db.sql_start()
 
 
 if __name__ == '__main__':

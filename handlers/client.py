@@ -2,6 +2,7 @@ from aiogram import types, Dispatcher
 from aiogram.utils.exceptions import BotBlocked
 
 from create_bot import bot
+from data_base.sqlite_db import sql_read
 from keyboards import kb_client
 
 
@@ -32,7 +33,12 @@ async def pizza_place_command(message: types.Message):
     await bot.send_message(message.from_user.id, 'Ул. Вкусная д.1')
 
 
+async def pizza_menu_command(message: types.Message):
+    await sql_read(message)
+
+
 def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(commands_start, commands=['start', 'help'])
     dp.register_message_handler(pizza_open_command, commands=['Режим_работы'])
     dp.register_message_handler(pizza_place_command, commands=['Расположение'])
+    dp.register_message_handler(pizza_menu_command, commands=['Меню'])
